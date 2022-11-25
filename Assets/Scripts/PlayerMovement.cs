@@ -1,18 +1,53 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody), typeof(Collider))]
 public class PlayerMovement : MonoBehaviour
 {
-    // Start is called before the first frame update
+    [SerializeField] private FixedJoystick _joystick;
+    [SerializeField] private float _speed;
+    private Animator _animator;
+    private Rigidbody _rb;
+    private bool _isMoving;
+
     void Start()
     {
-        
+        _rb = GetComponent<Rigidbody>();
+        _animator = GetComponent<Animator>();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnEnable()
     {
-        
+        LoseController.playerLose += DisablePlayer;
+        WinController.playerWin += DisablePlayer;
+    }
+    private void OnDisable()
+    {
+        LoseController.playerLose -= DisablePlayer;
+        WinController.playerWin -= DisablePlayer;
+    }
+
+    private void DisablePlayer()
+    {
+        _joystick.gameObject.SetActive(false);
+    }
+
+    private void FixedUpdate()
+    {
+
+        if (_joystick.Horizontal != 0 || _joystick.Vertical != 0)
+        {
+            _isMoving = true;
+        }
+        else
+        {
+            _animator.SetFloat("speed", 0);
+            _isMoving = false;
+        }
+
+        if (!_isMoving)
+            return;
+        _rb.velocity = new Vector3(_joystick.Horizontal * _speed, _rb.velocity.y, _joystick.Vertical * _speed);
+        transform.rotation = Quaternion.LookRotation(_rb.velocity.normalized);
+        _animator.SetFloat("speed", _rb.velocity.magnitude);
     }
 }
