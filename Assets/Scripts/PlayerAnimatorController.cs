@@ -16,16 +16,18 @@ public class PlayerAnimatorController : MonoBehaviour
     private void Start()
     {
         WinController.playerWin += PlayerWin;
+        KilledEnemiesCounter.enemyKilled += OnEnemyKilled;
+    }
+
+    private void OnEnemyKilled()
+    {
+        _animator.SetTrigger("enemyKilled");
     }
 
     private void OnDestroy()
     {
         WinController.playerWin -= PlayerWin;
-    }
-
-    private void FixedUpdate()
-    {
-        //_animator.SetFloat("speed", _rb.velocity.magnitude);
+        KilledEnemiesCounter.enemyKilled += OnEnemyKilled;
     }
 
     private void PlayerWin()

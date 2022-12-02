@@ -41,14 +41,29 @@ public abstract class Gun : MonoBehaviour
     private void Start()
     {
         _bulletMass = bullet.GetComponent<Rigidbody>().mass;
+        EnterTheGunController.enterTheGun += CanShoot;
+    }
+
+    private void OnDestroy()
+    {
+        EnterTheGunController.enterTheGun -= CanShoot;
+    }
+
+    private void CanShoot(bool entered)
+    {
+        _canShoot = entered;
     }
 
     private void Update()
     {
-
+        if (!EnterTheGunController.enteredTheGun)
+        {
+            _trajectory.HideTrajectory();
+            return;
+        }   
         if (GlobalVars.IsPlayerMoving())
             return;
-        if (Input.GetMouseButton(0) && _enterTheGunController.ThisZone)
+        if (Input.GetMouseButton(0) && _enterTheGunController.ThisZone && EnterTheGunController.enteredTheGun)
         {
             Vector3 speed = (GlobalVars.lookAtPoint.position - transform.position) * bulletSpeed;
             _trajectory.ShowTrajectory(bulletSpawnPoint.position, speed, _bulletMass);
@@ -58,7 +73,6 @@ public abstract class Gun : MonoBehaviour
         {
             _trajectory.HideTrajectory();
         }
-
         if (Input.GetMouseButtonUp(0) && _enterTheGunController.ThisZone && _canShoot && _isAiming)
             Fire();
 

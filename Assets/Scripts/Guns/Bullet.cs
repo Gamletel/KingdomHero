@@ -42,6 +42,11 @@ public class Bullet : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        gameObject.SetActive(false);
+    }
+
     private void Update()
     {
         if (!gameObject.activeInHierarchy)
@@ -52,7 +57,7 @@ public class Bullet : MonoBehaviour
             case true:
                 if (_isGrounded)
                     return;
-                transform.Rotate(_rotationVector, _rotationSpeed);
+                transform.Rotate(_rotationVector, _rotationSpeed * Time.deltaTime);
                 break;
 
             case false:
@@ -68,6 +73,18 @@ public class Bullet : MonoBehaviour
     private void OnEnable()
     {
         this.StartCoroutine(LifeTime());
+    }
+
+    private void OnDisable()
+    {
+        this.StopCoroutine(LifeTime());
+        this._rb.velocity = Vector3.zero;
+        _rb.constraints = RigidbodyConstraints.None;
+        _isGrounded = false;
+        GetComponent<Collider>().enabled = true;
+
+        if (_isAOE)
+            _AOECollider.enabled = false;
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -91,11 +108,32 @@ public class Bullet : MonoBehaviour
         if (other.gameObject.TryGetComponent(out Enemy component))
         {
             isHit?.Invoke();
+
             Debug.Log("Попал!");
-            component.GetDamage(_dmg, _rb.mass, (other.transform.position - transform.position).normalized + Vector3.up * _rb.mass, transform.position);
+            switch (_isAOE)
+            {
+                case true:
+                    component.GetDamage(
+                    _dmg,
+                    _rb.mass,
+                    (new Vector3((other.transform.position.x - transform.position.x), 0, (other.transform.position.z - transform.position.z)).normalized * 2 + Vector3.up * 3) * _rb.mass,
+                    transform.position
+                    );
+                    break;
+                case false:
+                    component.GetDamage(
+                    _dmg,
+                    _rb.mass,
+                    (new Vector3(-(other.transform.position.x - transform.position.x), 0, -(other.transform.position.z - transform.position.z)).normalized + Vector3.up * 3) * _rb.mass,
+                    transform.position
+                    );
+                    break;
+            }
+
 
             if (_destroyOnHit)
             {
+                EnemyHitController.OnEnemyHit(transform.position);
                 gameObject.SetActive(false);
             }
         }
@@ -113,17 +151,6 @@ public class Bullet : MonoBehaviour
         _AOECollider.enabled = false;
     }
 
-    private void OnDisable()
-    {
-        this.StopCoroutine(LifeTime());
-        _rb.constraints = RigidbodyConstraints.FreezeAll;
-        _rb.constraints = RigidbodyConstraints.None;
-        _isGrounded = false;
-        GetComponent<Collider>().enabled = true;
-
-        if (_isAOE)
-            _AOECollider.enabled = false;
-    }
 
     public IEnumerator LifeTime()
     {

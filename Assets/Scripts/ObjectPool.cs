@@ -39,9 +39,11 @@ public class ObjectPool<T> where T : MonoBehaviour
     private T CreateObject()
     {
         var createdObj = UnityEngine.Object.Instantiate(this.prefab, this.container.position, Quaternion.identity);
-        createdObj.gameObject.SetActive(false);
+        createdObj.gameObject.SetActive(true);
         this.pool.Add(createdObj);
+        createdObj.gameObject.SetActive(true);
         return createdObj;
+        
     }
 
     public bool HasFreeElement(out T element)

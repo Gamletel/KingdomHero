@@ -2,23 +2,19 @@ using UnityEngine;
 
 public class LosePanelController : MonoBehaviour
 {
-    private void Awake()
+    private void Start()
     {
+        LoseController.playerLose += EnablePanel;
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        LoseController.playerLose -= EnablePanel;
     }
 
     private void EnablePanel()
     {
         gameObject.SetActive(true);
-    }
-
-    private void OnEnable()
-    {
-        LoseController.playerLose -= EnablePanel;
-    }
-
-    private void OnDisable()
-    {
-        LoseController.playerLose += EnablePanel;
-    }
+    } 
 }

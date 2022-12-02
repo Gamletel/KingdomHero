@@ -9,6 +9,7 @@ public class LoseController : MonoBehaviour
 
     public static void OnPlayerLose()
     {
+        GlobalVars.gamePanel.SetActive(false);
         playerLose?.Invoke();
     }
 }

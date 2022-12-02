@@ -2,23 +2,19 @@ using UnityEngine;
 
 public class WinPanelController : MonoBehaviour
 {
-    private void Awake()
+    private void Start()
     {
+        WinController.playerWin += EnableWinPanel;
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        WinController.playerWin -= EnableWinPanel;
     }
 
     private void EnableWinPanel()
     {
         gameObject.SetActive(true);
-    }
-
-    private void OnEnable()
-    {
-        WinController.playerWin -= EnableWinPanel;
-    }
-
-    private void OnDisable()
-    {
-        WinController.playerWin += EnableWinPanel;
     }
 }

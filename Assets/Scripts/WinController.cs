@@ -9,6 +9,7 @@ public class WinController : MonoBehaviour
 
     public static void OnPlayerWin()
     {
+        GlobalVars.gamePanel.SetActive(false);
         playerWin?.Invoke();
     }
 }

@@ -1,9 +1,13 @@
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider))]
+[RequireComponent(typeof(SphereCollider))]
 public class EnterTheGunController : MonoBehaviour
 {
+    public delegate void EnterTheGun(bool entered);
+    public static event EnterTheGun enterTheGun;
+
     public bool ThisZone { get; private set; }
+    public static bool enteredTheGun;
     private GunCameraController _gunCameraController;
 
     private void Awake()
@@ -16,18 +20,24 @@ public class EnterTheGunController : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            FireJoystickController.SetJoystickVisibility();
+            EnterTheGunBtn.enterTheGunBtn.SetActive(true);
             ThisZone = !ThisZone;
             _gunCameraController.enabled = true;
         }
     }
+
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            FireJoystickController.SetJoystickVisibility();
+            EnterTheGunBtn.enterTheGunBtn.SetActive(false);
             ThisZone = !ThisZone;
             _gunCameraController.enabled = false;
         }
+    }
+
+    public static void OnEnterTheGun(bool entered)
+    {
+        enterTheGun?.Invoke(entered);
     }
 }

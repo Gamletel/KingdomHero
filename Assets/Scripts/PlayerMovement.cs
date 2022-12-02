@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody), typeof(Collider))]
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private FixedJoystick _joystick;
+    private DynamicJoystick _joystick;
     [SerializeField] private float _speed;
     private Animator _animator;
     private Rigidbody _rb;
@@ -11,6 +11,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
+        _joystick = GlobalVars.moveJoystick.GetComponent<DynamicJoystick>();
         _rb = GetComponent<Rigidbody>();
         _animator = GetComponent<Animator>();
     }
@@ -26,13 +27,15 @@ public class PlayerMovement : MonoBehaviour
         WinController.playerWin -= DisablePlayer;
     }
 
-    private void DisablePlayer()
+    public void DisablePlayer()
     {
-        _joystick.gameObject.SetActive(false);
+        GlobalVars.moveJoystick.SetActive(false);
     }
 
     private void FixedUpdate()
     {
+        if (!GlobalVars.IsPlayerMoving())
+            return;
 
         if (_joystick.Horizontal != 0 || _joystick.Vertical != 0)
         {
@@ -46,6 +49,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (!_isMoving)
             return;
+
         _rb.velocity = new Vector3(_joystick.Horizontal * _speed, _rb.velocity.y, _joystick.Vertical * _speed);
         transform.rotation = Quaternion.LookRotation(_rb.velocity.normalized);
         _animator.SetFloat("speed", _rb.velocity.magnitude);

@@ -1,9 +1,10 @@
 using UnityEngine;
-using Cinemachine;
-using System.Collections;
+
 
 public class GunCameraController : MonoBehaviour
 {
+    public delegate void ActivateCamera(bool isActive);
+    public static event ActivateCamera activateCamera;
     [field: SerializeField] public GameObject gunCamera { get; private set; }
     [Header("Перемещение камеры по оси Y")]
     [SerializeField] private bool _useYcoordinate = false;
@@ -11,6 +12,8 @@ public class GunCameraController : MonoBehaviour
     private Transform lookAtPoint;
     private Vector2 _startPos;
     private EnterTheGunController _enterTheGunController;
+
+    private bool _canAiming;
 
     private void Awake()
     {
@@ -20,43 +23,51 @@ public class GunCameraController : MonoBehaviour
 
     private void Start()
     {
-        Bullet.isHit += DisableCamera;
         lookAtPoint = GlobalVars.lookAtPoint;
         _startPos = lookAtPoint.transform.position;
+        activateCamera += SetGunCamera;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
-        if (OnThisGun() && _enterTheGunController.ThisZone)
+        if (_enterTheGunController.ThisZone && EnterTheGunController.enteredTheGun)
         {
-            GlobalVars.moveJoystick.SetActive(false);
-            lookAtPoint.position = new Vector2(lookAtPoint.position.x + FireJoystickController.FireJoystick.Horizontal / 15,
-                lookAtPoint.position.y + FireJoystickController.FireJoystick.Vertical / 15);
 
-            gunCamera.SetActive(true);
             switch (_useYcoordinate)
             {
                 case true:
-                    transform.LookAt(lookAtPoint);
+                    if (Input.touchCount != 0)
+                    {
+                        Touch touch = Input.GetTouch(0);
+                        Ray ray = Camera.main.ScreenPointToRay(touch.position);
+                        RaycastHit hit;
+                        if (touch.phase != TouchPhase.Canceled)
+                        {
+                            if (Physics.Raycast(ray, out hit, 100))
+                                lookAtPoint.position = hit.point;
+                        }
+                        transform.LookAt(lookAtPoint);
+                    }
+                        
                     break;
+
                 case false:
+                    lookAtPoint.position = new Vector2(lookAtPoint.position.x + FireJoystickController.FireJoystick.Horizontal / 5,
+                lookAtPoint.position.y + FireJoystickController.FireJoystick.Vertical / 5);
                     transform.LookAt(new Vector3(lookAtPoint.position.x, transform.position.y, lookAtPoint.position.z));
                     break;
             }
         }
     }
 
-    private bool OnThisGun()
+    public static void SetCameraActive(bool isActive)
     {
-        return FireJoystickController.FireJoystick.Direction != Vector2.zero;
+        activateCamera?.Invoke(isActive);
     }
 
-    public void DisableCamera()
+    private void SetGunCamera(bool isActive)
     {
-        if (OnThisGun())
-            return;
-        lookAtPoint.position = _startPos;
-        gunCamera.SetActive(false);
-        GlobalVars.moveJoystick.SetActive(true);
+        if (_enterTheGunController.ThisZone)
+            gunCamera.SetActive(isActive);
     }
 }
