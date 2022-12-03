@@ -11,8 +11,8 @@ public abstract class Gun : MonoBehaviour
     protected ObjectPool<Bullet> pool;
 
     /*ShootSettings*/
+    [HideInInspector]public Transform bulletSpawnPoint;
     protected GameObject loadedBullet;
-    protected Transform bulletSpawnPoint;
     protected float bulletSpeed;
     protected float reloadingTime;
     private float _bulletMass;
@@ -61,18 +61,32 @@ public abstract class Gun : MonoBehaviour
             _trajectory.HideTrajectory();
             return;
         }   
+
         if (GlobalVars.IsPlayerMoving())
             return;
+
         if (Input.GetMouseButton(0) && _enterTheGunController.ThisZone && EnterTheGunController.enteredTheGun)
         {
-            Vector3 speed = (GlobalVars.lookAtPoint.position - transform.position) * bulletSpeed;
-            _trajectory.ShowTrajectory(bulletSpawnPoint.position, speed, _bulletMass);
+            Vector3 speed;
+            switch (_gunCameraController.useSwipeForRotating)
+            {
+                case true:
+                    speed = bulletSpawnPoint.transform.forward * bulletSpeed;
+                    _trajectory.ShowTrajectory(bulletSpawnPoint.position, speed, _bulletMass);
+                    break;
+
+                case false:
+                    speed = (GlobalVars.lookAtPoint.position - transform.position) * bulletSpeed;
+                    _trajectory.ShowTrajectory(bulletSpawnPoint.position, speed, _bulletMass);
+                    break;
+            }
             _isAiming = true;
         }
         else
         {
             _trajectory.HideTrajectory();
         }
+
         if (Input.GetMouseButtonUp(0) && _enterTheGunController.ThisZone && _canShoot && _isAiming)
             Fire();
 
@@ -81,7 +95,17 @@ public abstract class Gun : MonoBehaviour
     protected virtual void Fire()
     {
         var bullet = pool.GetFreeElement();
-        var heading = GlobalVars.lookAtPoint.position - transform.position;
+        Vector3 heading;
+        switch (_gunCameraController.useSwipeForRotating)
+        {
+            case true:
+                heading = -loadedBullet.transform.forward;
+                break;
+
+            case false:
+                heading = GlobalVars.lookAtPoint.position - transform.position;
+                break;
+        }
         bullet.GetComponent<Rigidbody>().AddForce(heading * bulletSpeed, ForceMode.Impulse);
         Reload(reloadingTime);
         _isAiming = false;

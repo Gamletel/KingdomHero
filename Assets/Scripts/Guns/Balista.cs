@@ -35,7 +35,11 @@ public class Balista : MonoBehaviour
 
     /*Other*/
     private EnterTheGunController _enterTheGunController;
+    private TrajectoryRenderer _trajectory1;
+    private TrajectoryRenderer _trajectory2;
     [SerializeField] private TrajectoryRenderer _trajectory3;
+    
+    private GunCameraController _gunCameraController;
 
     private void Awake()
     {
@@ -50,6 +54,7 @@ public class Balista : MonoBehaviour
 
         _enterTheGunController = GetComponent<EnterTheGunController>();
         _reloadingImgController = GetComponentInChildren<ReloadingImgController>();
+        _gunCameraController = GetComponent<GunCameraController>();
     }
 
     private void Start()
@@ -59,13 +64,33 @@ public class Balista : MonoBehaviour
 
     private void Update()
     {
+        if (!EnterTheGunController.enteredTheGun)
+        {
+            _trajectory3.HideTrajectory();
+            return;
+        }
+
         if (GlobalVars.IsPlayerMoving())
             return;
 
-        if (Input.GetMouseButton(0) && _enterTheGunController.ThisZone)
+        if (Input.GetMouseButton(0) && _enterTheGunController.ThisZone && EnterTheGunController.enteredTheGun)
         {
-            Vector3 speed3 = (GlobalVars.lookAtPoint.position - thirdBulletSpawnPoint.position) * bulletSpeed;
-            _trajectory3.ShowTrajectory(thirdBulletSpawnPoint.position, speed3, _bulletMass);
+
+            Vector3 speed3;
+            switch (_gunCameraController.useSwipeForRotating)
+            {
+                case true:
+                    speed3 = firstBulletSpawnPoint.transform.forward * bulletSpeed;
+                    _trajectory3.ShowTrajectory(firstBulletSpawnPoint.position, speed3, _bulletMass);
+                    _isAiming = true;
+                    break;
+
+                case false:
+                    speed3 = (GlobalVars.lookAtPoint.position - transform.position) * bulletSpeed;
+                    _trajectory3.ShowTrajectory(thirdBulletSpawnPoint.position, speed3, _bulletMass);
+                    _isAiming = true;
+                    break;
+            }
             _isAiming = true;
         }
         else
@@ -86,20 +111,34 @@ public class Balista : MonoBehaviour
     private IEnumerator Shooting()
     {
         Reload(reloadingTime);
-        Vector3 pos1 = GlobalVars.lookAtPoint.position + Vector3.up * 1f;
-        Vector3 pos2 = GlobalVars.lookAtPoint.position + Vector3.up * .5f;
-        Vector3 pos3 = GlobalVars.lookAtPoint.position;
+
+        Vector3 pos1;
+        Vector3 pos2;
+        Vector3 pos3;
+
+        switch (_gunCameraController.useSwipeForRotating)
+        {
+            case true:
+                pos1 = firstLoadedBullet.transform.forward;
+                pos2 = secondLoadedBullet.transform.forward;
+                pos3 = thirdLoadedBullet.transform.forward;
+                break;
+
+            case false:
+                pos1 = GlobalVars.lookAtPoint.position - transform.position;
+                pos2 = GlobalVars.lookAtPoint.position - transform.position;
+                pos3 = GlobalVars.lookAtPoint.position - transform.position;
+                break;
+        }
         var firstBullet = firstPool.GetFreeElement();
-        var firstHeading = pos1 - transform.position;
-        firstBullet.GetComponent<Rigidbody>().AddForce(firstHeading * bulletSpeed, ForceMode.Impulse);
+        firstBullet.GetComponent<Rigidbody>().AddForce(pos1 * bulletSpeed, ForceMode.Impulse);
         yield return new WaitForSeconds(_shootDelay);
         var secondBullet = secondPool.GetFreeElement();
-        var secondHeading = pos2 - transform.position;
-        secondBullet.GetComponent<Rigidbody>().AddForce(secondHeading * bulletSpeed, ForceMode.Impulse);
+        secondBullet.GetComponent<Rigidbody>().AddForce(pos2 * bulletSpeed, ForceMode.Impulse);
         yield return new WaitForSeconds(_shootDelay);
         var thirdBullet = thirdPool.GetFreeElement();
-        var thirdHeading = pos3 - transform.position;
-        thirdBullet.GetComponent<Rigidbody>().AddForce(thirdHeading * bulletSpeed, ForceMode.Impulse);
+        thirdBullet.GetComponent<Rigidbody>().AddForce(pos3 * bulletSpeed, ForceMode.Impulse);
+        
         _isAiming = false;
     }
 
