@@ -21,6 +21,7 @@ public abstract class Enemy : MonoBehaviour
     private Rigidbody _rb;
     private bool _canAttack = true;
     private bool _isAttacking;
+    private bool _canMove = true;
     private Animator _animator;
     private Collider _col;
 
@@ -29,6 +30,7 @@ public abstract class Enemy : MonoBehaviour
     int _attackHash;
     int _getDamageHash;
     int _isDeadHash;
+    int _winningHash;
 
     public void ApplyVars()
     {
@@ -46,6 +48,7 @@ public abstract class Enemy : MonoBehaviour
         _attackHash = Animator.StringToHash("Attack");
         _getDamageHash = Animator.StringToHash("getDamage");
         _isDeadHash = Animator.StringToHash("isDead");
+        _winningHash = Animator.StringToHash("Winning");
     }
 
     private void Start()
@@ -54,11 +57,19 @@ public abstract class Enemy : MonoBehaviour
         transform.LookAt(transform.position + Vector3.back);
         _animator.SetBool(_isMovingHash, true);
         gameObject.SetActive(false);
+        LoseController.playerLose += EnemyWinning;
+    }
+
+    private void EnemyWinning()
+    {
+        _canMove = false;
+        _canAttack = false;
+        _animator.SetTrigger(_winningHash);
     }
 
     private void Update()
     {
-        if (_isAttacking || curHP <= 0)
+        if (_isAttacking || curHP <= 0 || !_canMove)
             return;
         Move();
     }

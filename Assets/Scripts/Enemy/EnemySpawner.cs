@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
+    public delegate void NewWave(int wave);
+    public static event NewWave newWave;
+
     [Header("Spawner Settings")]
     [SerializeField] private Transform[] _spawnPoints;
     [SerializeField] private Transform _curSpawnPoint;
@@ -22,9 +25,12 @@ public class EnemySpawner : MonoBehaviour
     private ObjectPool<EnemyArcher> _enemyArcherPool;
     private ObjectPool<EnemyBig> _enemyBigPool;
 
-    [HideInInspector] public static EnemyWarrior[] warriorArray;
-    [HideInInspector] public static GameObject[] archersArray;
-    [HideInInspector] public static GameObject[] bigEnemyArray;
+    [Header("Wave Settings")]
+    [SerializeField] private int _maxWave = 3;
+    [SerializeField] private int _warriorsToSpawn;
+    [SerializeField] private int _archersToSpawn;
+    [SerializeField] private int _bigsToSpawn;
+    private int _curWave = 0;
 
     private int _curWarriorAmount;
     private int _curArcherAmount;
@@ -37,19 +43,20 @@ public class EnemySpawner : MonoBehaviour
         _curSpawnPoint.position = _spawnPoints[Random.Range(0, _spawnPoints.Length)].position;
 
         _enemyWarriorPool = new ObjectPool<EnemyWarrior>(_enemyWarrior, _warriorPoolCount, _curSpawnPoint);
-        warriorArray = FindObjectsOfType<EnemyWarrior>();
         _enemyArcherPool = new ObjectPool<EnemyArcher>(_enemyArcher, _archerPoolCount, _curSpawnPoint);
         _enemyBigPool = new ObjectPool<EnemyBig>(_enemyBig, _bigPoolCount, _curSpawnPoint);
     }
 
     private void Start()
     {
-        StartWaveController.waveStarted += StartSpawn;
+        StartWaveController.waveStarted += StartSpawner;
+        KilledEnemiesCounter.allEnemiesKilled += StartSpawner;
     }
 
     private void OnDestroy()
     {
-        StartWaveController.waveStarted -= StartSpawn;
+        StartWaveController.waveStarted -= StartSpawner;
+        KilledEnemiesCounter.allEnemiesKilled -= StartSpawner;
     }
 
     private void StopSpawner()
@@ -57,13 +64,39 @@ public class EnemySpawner : MonoBehaviour
         StopCoroutine(Spawner());
     }
 
-    private void StartSpawn()
+    private void StartSpawner()
     {
+        newWave?.Invoke(_curWave + 1);
+        StartCoroutine(WaveDelay());
+    }
 
-        _enemiesAmount = _warriorPoolCount + _archerPoolCount + _bigPoolCount;
+    private IEnumerator WaveDelay()
+    {
+        if (_curWave < _maxWave)
+        {
+            _warriorsToSpawn += 10;
+            _archersToSpawn += 15;
+            _bigsToSpawn += 3;
 
-        StartCoroutine(Spawner());
-        KilledEnemiesCounter.SetEnemiesAmount(_enemiesAmount);
+
+            _curWarriorAmount = 0;
+            _curArcherAmount = 0;
+            _curBigAmount = 0;
+
+            _curEnemies = 0;
+
+            _enemiesAmount = _warriorsToSpawn + _archersToSpawn + _bigsToSpawn;
+            KilledEnemiesCounter.SetEnemiesAmount(_enemiesAmount);
+
+            yield return new WaitForSeconds(5f);
+            StartCoroutine(Spawner());
+            _curWave++;
+        }
+        else
+        {
+            StopCoroutine(WaveDelay());
+            WinController.OnPlayerWin();
+        }
     }
 
     private IEnumerator Spawner()
@@ -73,8 +106,7 @@ public class EnemySpawner : MonoBehaviour
             yield return new WaitForSeconds(_spawnDelay);
             Spawn();
         }
-        StopSpawner();
-        Debug.Log("Все враги заспавнены!");
+        Debug.Log($"Все враги заспавнены! Следующая волна: #{_curWave}");
     }
 
     private void Spawn()
@@ -84,7 +116,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (i <= 30)
         {
-            if (_curWarriorAmount != _warriorPoolCount)
+            if (_curWarriorAmount != _warriorsToSpawn)
             {
                 _enemyWarriorPool.GetFreeElement();
                 _curWarriorAmount++;
@@ -100,7 +132,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (i > 30 && i < 90)
         {
-            if (_curArcherAmount != _archerPoolCount)
+            if (_curArcherAmount != _archersToSpawn)
             {
                 _enemyArcherPool.GetFreeElement();
                 _curArcherAmount++;
@@ -116,7 +148,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (i >= 90)
         {
-            if (_curBigAmount != _bigPoolCount)
+            if (_curBigAmount != _bigsToSpawn)
             {
                 _enemyBigPool.GetFreeElement();
                 _curBigAmount++;

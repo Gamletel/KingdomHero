@@ -19,6 +19,6 @@ public class PlayerVisibilityController : MonoBehaviour
 
     private void DisablePlayer()
     {
-        GlobalVars.player.SetActive(false);
+        gameObject.SetActive(false);
     }
 }

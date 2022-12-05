@@ -14,7 +14,8 @@ public class KilledEnemiesCounter : MonoBehaviour
 
     public static void OnAllEnemiesKilled()
     {
-        WinController.OnPlayerWin();
+        allEnemiesKilled?.Invoke();
+        _killedEnemies = 0;
     }
 
     public static void SetEnemiesAmount(int amount)

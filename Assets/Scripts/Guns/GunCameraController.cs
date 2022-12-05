@@ -93,7 +93,7 @@ public class GunCameraController : MonoBehaviour
                         return;
 
                     case false:
-                        if (_bulletSpawnPoints != null)
+                        if (_bulletSpawnPoints.Length != 0)
                         {
                             foreach (var bulletSpawnPoint in _bulletSpawnPoints)
                             {
@@ -131,14 +131,14 @@ public class GunCameraController : MonoBehaviour
         _curY += _touch.deltaPosition.x * Time.deltaTime * _rotationSpeed;
 
         if (_curX > MAX_X)
-            _curX = _curX - 1;
+            _curX = _curX - 2;
         if (_curX < MIN_X)
-            _curX = _curX + 1;
+            _curX = _curX + 2;
 
         if (_curY > MAX_Y)
-            _curY = _curY - 1;
+            _curY = _curY - 2;
         if (_curY < MIN_Y)
-            _curY = _curY + 1;
+            _curY = _curY + 2;
 
         rot = Quaternion.Euler(_curX, _curY, 0);
     }

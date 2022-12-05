@@ -11,7 +11,7 @@ public class EnemiesController : MonoBehaviour
 
     void Start()
     {
-        _enemiesPool = EnemySpawner.warriorArray;
+        //_enemiesPool = EnemySpawner.warriorArray;
         Debug.Log(_enemiesPool.Length);
     }
     private void Update()
